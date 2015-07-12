@@ -48,16 +48,19 @@ else:
   cdecl
 .}
 
+import os
+const ThisPath = currentSourcePath.splitPath.head
 
 # does not work unfortunately:
 # {.emit:"""/*TYPESECTION*/
 # #include <GL/gl.h>
 # #include <nanovg.h>
 # """.}
-{.passc:" -include\"GL/gl.h\" -include\"nanovg.h\" ".}
-{.passc:"-I./nanovg/src -I./nanovg/example -DNANOVG_"&GLVersion&"_IMPLEMENTATION".}
+{.passC: " -include\"GL/gl.h\" -include\"nanovg.h\" ".}
+{.passC: "-DNANOVG_"&GLVersion&"_IMPLEMENTATION".}
+{.passC: "-I"&ThisPath&"/nanovg/src -I"&ThisPath&"/nanovg/example ".}
+{.passL: "-lGL".}
 {.compile: "nanovg/src/nanovg.c"}
-{.passl:"-lGL".}
 
 
 const 
