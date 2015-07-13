@@ -48,8 +48,13 @@ else:
   cdecl
 .}
 
+{.pragma: nvgType,
+  header:"nanovg.h",
+  importc
+.}
+
 import os
-const ThisPath = currentSourcePath.splitPath.head
+const ThisPath* = currentSourcePath.splitPath.head
 
 # does not work unfortunately:
 # {.emit:"""/*TYPESECTION*/
@@ -60,22 +65,23 @@ const ThisPath = currentSourcePath.splitPath.head
 {.passC: "-DNANOVG_"&GLVersion&"_IMPLEMENTATION".}
 {.passC: "-I"&ThisPath&"/nanovg/src -I"&ThisPath&"/nanovg/example ".}
 {.passL: "-lGL".}
-{.compile: "nanovg/src/nanovg.c"}
+{.compile: ThisPath/"nanovg/src/nanovg.c"}
 
 
 const 
   NVG_PI* = math.PI#3.141592653589793
 
 type
-  NVGcontext* {.importc.} = object
+  NVGcontext* {.nvgType.} = object
+  NVGcontextPtr* = ptr NVGcontext
 
-  NVGcolor* {.importc.} = object 
+  NVGcolor* {.nvgType, byCopy.} = object 
     r*: cfloat
     g*: cfloat
     b*: cfloat
     a*: cfloat
 
-  NVGpaint* {.importc.} = object 
+  NVGpaint* {.nvgType, byCopy.} = object 
     xform*: array[6, cfloat]
     extent*: array[2, cfloat]
     radius*: cfloat
@@ -84,9 +90,10 @@ type
     outerColor*: NVGcolor
     image*: cint
 
-  NVGwinding* {.importc.} = enum 
-    NVG_CCW = 1,              # Winding for solid shapes
-    NVG_CW = 2                # Winding for holes
+  NVGwinding* = distinct cint
+const
+  NVG_CCW* = 1.NVGwinding     # Winding for solid shapes
+  NVG_CW* = 2.NVGwinding      # Winding for holes
 
 
 type 
@@ -144,14 +151,14 @@ type
 # frame buffer size. In that case you would set windowWidth/Height to the window size
 # devicePixelRatio to: frameBufferWidth / windowWidth.
 
-proc nvgBeginFrame*(ctx: ptr NVGcontext; windowWidth: cint; windowHeight: cint; 
+proc nvgBeginFrame*(ctx: NVGcontextPtr; windowWidth: cint; windowHeight: cint; 
                     devicePixelRatio: cfloat) {.nvg.}
 # Cancels drawing the current frame.
 
-proc nvgCancelFrame*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgCancelFrame*(ctx: NVGcontextPtr) {.nvg.}
 # Ends drawing flushing remaining render state.
 
-proc nvgEndFrame*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgEndFrame*(ctx: NVGcontextPtr) {.nvg.}
 #
 # Color utils
 #
@@ -194,13 +201,13 @@ proc nvgHSLA*(h: cfloat; s: cfloat; l: cfloat; a: cuchar): NVGcolor {.nvg.}
 # Pushes and saves the current render state into a state stack.
 # A matching nvgRestore() must be used to restore the state.
 
-proc nvgSave*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgSave*(ctx: NVGcontextPtr) {.nvg.}
 # Pops and restores current render state.
 
-proc nvgRestore*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgRestore*(ctx: NVGcontextPtr) {.nvg.}
 # Resets current render state to default values. Does not affect the render state stack.
 
-proc nvgReset*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgReset*(ctx: NVGcontextPtr) {.nvg.}
 #
 # Render styles
 #
@@ -211,35 +218,35 @@ proc nvgReset*(ctx: ptr NVGcontext) {.nvg.}
 # Current render style can be saved and restored using nvgSave() and nvgRestore(). 
 # Sets current stroke style to a solid color.
 
-proc nvgStrokeColor*(ctx: ptr NVGcontext; color: NVGcolor) {.nvg.}
+proc nvgStrokeColor*(ctx: NVGcontextPtr; color: NVGcolor) {.nvg.}
 # Sets current stroke style to a paint, which can be a one of the gradients or a pattern.
 
-proc nvgStrokePaint*(ctx: ptr NVGcontext; paint: NVGpaint) {.nvg.}
+proc nvgStrokePaint*(ctx: NVGcontextPtr; paint: NVGpaint) {.nvg.}
 # Sets current fill style to a solid color.
 
-proc nvgFillColor*(ctx: ptr NVGcontext; color: NVGcolor) {.nvg.}
+proc nvgFillColor*(ctx: NVGcontextPtr; color: NVGcolor) {.nvg.}
 # Sets current fill style to a paint, which can be a one of the gradients or a pattern.
 
-proc nvgFillPaint*(ctx: ptr NVGcontext; paint: NVGpaint) {.nvg.}
+proc nvgFillPaint*(ctx: NVGcontextPtr; paint: NVGpaint) {.nvg.}
 # Sets the miter limit of the stroke style.
 # Miter limit controls when a sharp corner is beveled.
 
-proc nvgMiterLimit*(ctx: ptr NVGcontext; limit: cfloat) {.nvg.}
+proc nvgMiterLimit*(ctx: NVGcontextPtr; limit: cfloat) {.nvg.}
 # Sets the stroke width of the stroke style.
 
-proc nvgStrokeWidth*(ctx: ptr NVGcontext; size: cfloat) {.nvg.}
+proc nvgStrokeWidth*(ctx: NVGcontextPtr; size: cfloat) {.nvg.}
 # Sets how the end of the line (cap) is drawn,
 # Can be one of: NVG_BUTT (default), NVG_ROUND, NVG_SQUARE.
 
-proc nvgLineCap*(ctx: ptr NVGcontext; cap: cint) {.nvg.}
+proc nvgLineCap*(ctx: NVGcontextPtr; cap: cint) {.nvg.}
 # Sets how sharp path corners are drawn.
 # Can be one of NVG_MITER (default), NVG_ROUND, NVG_BEVEL.
 
-proc nvgLineJoin*(ctx: ptr NVGcontext; join: cint) {.nvg.}
+proc nvgLineJoin*(ctx: NVGcontextPtr; join: cint) {.nvg.}
 # Sets the transparency applied to all rendered shapes.
 # Already transparent paths will get proportionally more transparent as well.
 
-proc nvgGlobalAlpha*(ctx: ptr NVGcontext; alpha: cfloat) {.nvg.}
+proc nvgGlobalAlpha*(ctx: NVGcontextPtr; alpha: cfloat) {.nvg.}
 #
 # Transforms
 #
@@ -258,37 +265,37 @@ proc nvgGlobalAlpha*(ctx: ptr NVGcontext; alpha: cfloat) {.nvg.}
 # Current coordinate system (transformation) can be saved and restored using nvgSave() and nvgRestore(). 
 # Resets current transform to a identity matrix.
 
-proc nvgResetTransform*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgResetTransform*(ctx: NVGcontextPtr) {.nvg.}
 # Premultiplies current coordinate system by specified matrix.
 # The parameters are interpreted as matrix as follows:
 #   [a c e]
 #   [b d f]
 #   [0 0 1]
 
-proc nvgTransform*(ctx: ptr NVGcontext; a: cfloat; b: cfloat; c: cfloat; 
+proc nvgTransform*(ctx: NVGcontextPtr; a: cfloat; b: cfloat; c: cfloat; 
                    d: cfloat; e: cfloat; f: cfloat) {.nvg.}
 # Translates current coordinate system.
 
-proc nvgTranslate*(ctx: ptr NVGcontext; x: cfloat; y: cfloat) {.nvg.}
+proc nvgTranslate*(ctx: NVGcontextPtr; x: cfloat; y: cfloat) {.nvg.}
 # Rotates current coordinate system. Angle is specified in radians.
 
-proc nvgRotate*(ctx: ptr NVGcontext; angle: cfloat) {.nvg.}
+proc nvgRotate*(ctx: NVGcontextPtr; angle: cfloat) {.nvg.}
 # Skews the current coordinate system along X axis. Angle is specified in radians.
 
-proc nvgSkewX*(ctx: ptr NVGcontext; angle: cfloat) {.nvg.}
+proc nvgSkewX*(ctx: NVGcontextPtr; angle: cfloat) {.nvg.}
 # Skews the current coordinate system along Y axis. Angle is specified in radians.
 
-proc nvgSkewY*(ctx: ptr NVGcontext; angle: cfloat) {.nvg.}
+proc nvgSkewY*(ctx: NVGcontextPtr; angle: cfloat) {.nvg.}
 # Scales the current coordinate system.
 
-proc nvgScale*(ctx: ptr NVGcontext; x: cfloat; y: cfloat) {.nvg.}
+proc nvgScale*(ctx: NVGcontextPtr; x: cfloat; y: cfloat) {.nvg.}
 # Stores the top part (a-f) of the current transformation matrix in to the specified buffer.
 #   [a c e]
 #   [b d f]
 #   [0 0 1]
 # There should be space for 6 floats in the return buffer for the values a-f.
 
-proc nvgCurrentTransform*(ctx: ptr NVGcontext; xform: ptr cfloat) {.nvg.}
+proc nvgCurrentTransform*(ctx: NVGcontextPtr; xform: ptr cfloat) {.nvg.}
 # The following functions can be used to make calculations on 2x3 transformation matrices.
 # A 2x3 matrix is represented as float[6].
 # Sets the transform to identity matrix.
@@ -336,26 +343,26 @@ proc nvgRadToDeg*(rad: cfloat): cfloat {.nvg.}
 # Creates image by loading it from the disk from specified file name.
 # Returns handle to the image.
 
-proc nvgCreateImage*(ctx: ptr NVGcontext; filename: cstring; imageFlags: cint): cint {.nvg.}
+proc nvgCreateImage*(ctx: NVGcontextPtr; filename: cstring; imageFlags: cint): cint {.nvg.}
 # Creates image by loading it from the specified chunk of memory.
 # Returns handle to the image.
 
-proc nvgCreateImageMem*(ctx: ptr NVGcontext; imageFlags: cint; data: ptr cuchar; 
+proc nvgCreateImageMem*(ctx: NVGcontextPtr; imageFlags: cint; data: ptr cuchar; 
                         ndata: cint): cint {.nvg.}
 # Creates image from specified image data.
 # Returns handle to the image.
 
-proc nvgCreateImageRGBA*(ctx: ptr NVGcontext; w: cint; h: cint; 
+proc nvgCreateImageRGBA*(ctx: NVGcontextPtr; w: cint; h: cint; 
                          imageFlags: cint; data: ptr cuchar): cint {.nvg.}
 # Updates image data specified by image handle.
 
-proc nvgUpdateImage*(ctx: ptr NVGcontext; image: cint; data: ptr cuchar) {.nvg.}
+proc nvgUpdateImage*(ctx: NVGcontextPtr; image: cint; data: ptr cuchar) {.nvg.}
 # Returns the dimensions of a created image.
 
-proc nvgImageSize*(ctx: ptr NVGcontext; image: cint; w: ptr cint; h: ptr cint) {.nvg.}
+proc nvgImageSize*(ctx: NVGcontextPtr; image: cint; w: ptr cint; h: ptr cint) {.nvg.}
 # Deletes created image.
 
-proc nvgDeleteImage*(ctx: ptr NVGcontext; image: cint) {.nvg.}
+proc nvgDeleteImage*(ctx: NVGcontextPtr; image: cint) {.nvg.}
 #
 # Paints
 #
@@ -365,7 +372,7 @@ proc nvgDeleteImage*(ctx: ptr NVGcontext; image: cint) {.nvg.}
 # of the linear gradient, icol specifies the start color and ocol the end color.
 # The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
 
-proc nvgLinearGradient*(ctx: ptr NVGcontext; sx: cfloat; sy: cfloat; ex: cfloat; 
+proc nvgLinearGradient*(ctx: NVGcontextPtr; sx: cfloat; sy: cfloat; ex: cfloat; 
                         ey: cfloat; icol: NVGcolor; ocol: NVGcolor): NVGpaint {.nvg.}
 # Creates and returns a box gradient. Box gradient is a feathered rounded rectangle, it is useful for rendering
 # drop shadows or highlights for boxes. Parameters (x,y) define the top-left corner of the rectangle,
@@ -373,21 +380,21 @@ proc nvgLinearGradient*(ctx: ptr NVGcontext; sx: cfloat; sy: cfloat; ex: cfloat;
 # the border of the rectangle is. Parameter icol specifies the inner color and ocol the outer color of the gradient.
 # The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
 
-proc nvgBoxGradient*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; 
+proc nvgBoxGradient*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; w: cfloat; 
                      h: cfloat; r: cfloat; f: cfloat; icol: NVGcolor; 
                      ocol: NVGcolor): NVGpaint {.nvg.}
 # Creates and returns a radial gradient. Parameters (cx,cy) specify the center, inr and outr specify
 # the inner and outer radius of the gradient, icol specifies the start color and ocol the end color.
 # The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
 
-proc nvgRadialGradient*(ctx: ptr NVGcontext; cx: cfloat; cy: cfloat; 
+proc nvgRadialGradient*(ctx: NVGcontextPtr; cx: cfloat; cy: cfloat; 
                         inr: cfloat; outr: cfloat; icol: NVGcolor; 
                         ocol: NVGcolor): NVGpaint {.nvg.}
 # Creates and returns an image patter. Parameters (ox,oy) specify the left-top location of the image pattern,
 # (ex,ey) the size of one image, angle rotation around the top-left corner, image is handle to the image to render.
 # The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
 
-proc nvgImagePattern*(ctx: ptr NVGcontext; ox: cfloat; oy: cfloat; ex: cfloat; 
+proc nvgImagePattern*(ctx: NVGcontextPtr; ox: cfloat; oy: cfloat; ex: cfloat; 
                       ey: cfloat; angle: cfloat; image: cint; alpha: cfloat): NVGpaint {.nvg.}
 #
 # Scissoring
@@ -397,7 +404,7 @@ proc nvgImagePattern*(ctx: ptr NVGcontext; ox: cfloat; oy: cfloat; ex: cfloat;
 # Sets the current scissor rectangle.
 # The scissor rectangle is transformed by the current transform.
 
-proc nvgScissor*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; h: cfloat) {.nvg.}
+proc nvgScissor*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; w: cfloat; h: cfloat) {.nvg.}
 # Intersects current scissor rectangle with the specified rectangle.
 # The scissor rectangle is transformed by the current transform.
 # Note: in case the rotation of previous scissor rect differs from
@@ -405,11 +412,11 @@ proc nvgScissor*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; h: cfloat
 # rectangle and the previous scissor rectangle transformed in the current
 # transform space. The resulting shape is always rectangle.
 
-proc nvgIntersectScissor*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; 
+proc nvgIntersectScissor*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; w: cfloat; 
                           h: cfloat) {.nvg.}
 # Reset and disables scissoring.
 
-proc nvgResetScissor*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgResetScissor*(ctx: NVGcontextPtr) {.nvg.}
 #
 # Paths
 #
@@ -428,57 +435,57 @@ proc nvgResetScissor*(ctx: ptr NVGcontext) {.nvg.}
 # The curve segments and sub-paths are transformed by the current transform.
 # Clears the current path and sub-paths.
 
-proc nvgBeginPath*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgBeginPath*(ctx: NVGcontextPtr) {.nvg.}
 # Starts new sub-path with specified point as first point.
 
-proc nvgMoveTo*(ctx: ptr NVGcontext; x: cfloat; y: cfloat) {.nvg.}
+proc nvgMoveTo*(ctx: NVGcontextPtr; x: cfloat; y: cfloat) {.nvg.}
 # Adds line segment from the last point in the path to the specified point.
 
-proc nvgLineTo*(ctx: ptr NVGcontext; x: cfloat; y: cfloat) {.nvg.}
+proc nvgLineTo*(ctx: NVGcontextPtr; x: cfloat; y: cfloat) {.nvg.}
 # Adds cubic bezier segment from last point in the path via two control points to the specified point.
 
-proc nvgBezierTo*(ctx: ptr NVGcontext; c1x: cfloat; c1y: cfloat; c2x: cfloat; 
+proc nvgBezierTo*(ctx: NVGcontextPtr; c1x: cfloat; c1y: cfloat; c2x: cfloat; 
                   c2y: cfloat; x: cfloat; y: cfloat) {.nvg.}
 # Adds quadratic bezier segment from last point in the path via a control point to the specified point.
 
-proc nvgQuadTo*(ctx: ptr NVGcontext; cx: cfloat; cy: cfloat; x: cfloat; 
+proc nvgQuadTo*(ctx: NVGcontextPtr; cx: cfloat; cy: cfloat; x: cfloat; 
                 y: cfloat) {.nvg.}
 # Adds an arc segment at the corner defined by the last path point, and two specified points.
 
-proc nvgArcTo*(ctx: ptr NVGcontext; x1: cfloat; y1: cfloat; x2: cfloat; 
+proc nvgArcTo*(ctx: NVGcontextPtr; x1: cfloat; y1: cfloat; x2: cfloat; 
                y2: cfloat; radius: cfloat) {.nvg.}
 # Closes current sub-path with a line segment.
 
-proc nvgClosePath*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgClosePath*(ctx: NVGcontextPtr) {.nvg.}
 # Sets the current sub-path winding, see NVGwinding and NVGsolidity. 
 
-proc nvgPathWinding*(ctx: ptr NVGcontext; dir: cint) {.nvg.}
+proc nvgPathWinding*(ctx: NVGcontextPtr; dir: cint) {.nvg.}
 # Creates new circle arc shaped sub-path. The arc center is at cx,cy, the arc radius is r,
 # and the arc is drawn from angle a0 to a1, and swept in direction dir (NVG_CCW, or NVG_CW).
 # Angles are specified in radians.
 
-proc nvgArc*(ctx: ptr NVGcontext; cx: cfloat; cy: cfloat; r: cfloat; a0: cfloat; 
-             a1: cfloat; dir: cint) {.nvg.}
+proc nvgArc*(ctx: NVGcontextPtr; cx: cfloat; cy: cfloat; r: cfloat; a0: cfloat; 
+             a1: cfloat; dir: NVGwinding) {.nvg.}
 # Creates new rectangle shaped sub-path.
 
-proc nvgRect*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; h: cfloat) {.nvg.}
+proc nvgRect*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; w: cfloat; h: cfloat) {.nvg.}
 # Creates new rounded rectangle shaped sub-path.
 
-proc nvgRoundedRect*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; w: cfloat; 
+proc nvgRoundedRect*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; w: cfloat; 
                      h: cfloat; r: cfloat) {.nvg.}
 # Creates new ellipse shaped sub-path.
 
-proc nvgEllipse*(ctx: ptr NVGcontext; cx: cfloat; cy: cfloat; rx: cfloat; 
+proc nvgEllipse*(ctx: NVGcontextPtr; cx: cfloat; cy: cfloat; rx: cfloat; 
                  ry: cfloat) {.nvg.}
 # Creates new circle shaped sub-path. 
 
-proc nvgCircle*(ctx: ptr NVGcontext; cx: cfloat; cy: cfloat; r: cfloat) {.nvg.}
+proc nvgCircle*(ctx: NVGcontextPtr; cx: cfloat; cy: cfloat; r: cfloat) {.nvg.}
 # Fills the current path with current fill style.
 
-proc nvgFill*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgFill*(ctx: NVGcontextPtr) {.nvg.}
 # Fills the current path with current stroke style.
 
-proc nvgStroke*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgStroke*(ctx: NVGcontextPtr) {.nvg.}
 #
 # Text
 #
@@ -514,76 +521,76 @@ proc nvgStroke*(ctx: ptr NVGcontext) {.nvg.}
 # Creates font by loading it from the disk from specified file name.
 # Returns handle to the font.
 
-proc nvgCreateFont*(ctx: ptr NVGcontext; name: cstring; filename: cstring): cint {.nvg.}
+proc nvgCreateFont*(ctx: NVGcontextPtr; name: cstring; filename: cstring): cint {.nvg.}
 # Creates image by loading it from the specified memory chunk.
 # Returns handle to the font.
 
-proc nvgCreateFontMem*(ctx: ptr NVGcontext; name: cstring; data: ptr cuchar; 
+proc nvgCreateFontMem*(ctx: NVGcontextPtr; name: cstring; data: ptr cuchar; 
                        ndata: cint; freeData: cint): cint {.nvg.}
 # Finds a loaded font of specified name, and returns handle to it, or -1 if the font is not found.
 
-proc nvgFindFont*(ctx: ptr NVGcontext; name: cstring): cint {.nvg.}
+proc nvgFindFont*(ctx: NVGcontextPtr; name: cstring): cint {.nvg.}
 # Sets the font size of current text style.
 
-proc nvgFontSize*(ctx: ptr NVGcontext; size: cfloat) {.nvg.}
+proc nvgFontSize*(ctx: NVGcontextPtr; size: cfloat) {.nvg.}
 # Sets the blur of current text style.
 
-proc nvgFontBlur*(ctx: ptr NVGcontext; blur: cfloat) {.nvg.}
+proc nvgFontBlur*(ctx: NVGcontextPtr; blur: cfloat) {.nvg.}
 # Sets the letter spacing of current text style.
 
-proc nvgTextLetterSpacing*(ctx: ptr NVGcontext; spacing: cfloat) {.nvg.}
+proc nvgTextLetterSpacing*(ctx: NVGcontextPtr; spacing: cfloat) {.nvg.}
 # Sets the proportional line height of current text style. The line height is specified as multiple of font size. 
 
-proc nvgTextLineHeight*(ctx: ptr NVGcontext; lineHeight: cfloat) {.nvg.}
+proc nvgTextLineHeight*(ctx: NVGcontextPtr; lineHeight: cfloat) {.nvg.}
 # Sets the text align of current text style, see NVGalign for options.
 
-proc nvgTextAlign*(ctx: ptr NVGcontext; align: cint) {.nvg.}
+proc nvgTextAlign*(ctx: NVGcontextPtr; align: cint) {.nvg.}
 # Sets the font face based on specified id of current text style.
 
-proc nvgFontFaceId*(ctx: ptr NVGcontext; font: cint) {.nvg.}
+proc nvgFontFaceId*(ctx: NVGcontextPtr; font: cint) {.nvg.}
 # Sets the font face based on specified name of current text style.
 
-proc nvgFontFace*(ctx: ptr NVGcontext; font: cstring) {.nvg.}
+proc nvgFontFace*(ctx: NVGcontextPtr; font: cstring) {.nvg.}
 # Draws text string at specified location. If end is specified only the sub-string up to the end is drawn.
 
-proc nvgText*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; string: cstring; 
+proc nvgText*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; string: cstring; 
               `end`: cstring): cfloat {.nvg.}
 # Draws multi-line text string at specified location wrapped at the specified width. If end is specified only the sub-string up to the end is drawn.
 # White space is stripped at the beginning of the rows, the text is split at word boundaries or when new-line characters are encountered.
 # Words longer than the max width are slit at nearest character (i.e. no hyphenation).
 
-proc nvgTextBox*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; 
+proc nvgTextBox*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
                  breakRowWidth: cfloat; string: cstring; `end`: cstring) {.nvg.}
 # Measures the specified text string. Parameter bounds should be a pointer to float[4],
 # if the bounding box of the text should be returned. The bounds value are [xmin,ymin, xmax,ymax]
 # Returns the horizontal advance of the measured text (i.e. where the next character should drawn).
 # Measured values are returned in local coordinate space.
 
-proc nvgTextBounds*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; string: cstring; 
+proc nvgTextBounds*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; string: cstring; 
                     `end`: cstring; bounds: ptr cfloat): cfloat {.nvg.}
 # Measures the specified multi-text string. Parameter bounds should be a pointer to float[4],
 # if the bounding box of the text should be returned. The bounds value are [xmin,ymin, xmax,ymax]
 # Measured values are returned in local coordinate space.
 
-proc nvgTextBoxBounds*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; 
+proc nvgTextBoxBounds*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
                        breakRowWidth: cfloat; string: cstring; `end`: cstring; 
                        bounds: ptr cfloat) {.nvg.}
 # Calculates the glyph x positions of the specified text. If end is specified only the sub-string will be used.
 # Measured values are returned in local coordinate space.
 
-proc nvgTextGlyphPositions*(ctx: ptr NVGcontext; x: cfloat; y: cfloat; 
+proc nvgTextGlyphPositions*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
                             string: cstring; `end`: cstring; 
                             positions: ptr NVGglyphPosition; maxPositions: cint): cint {.nvg.}
 # Returns the vertical metrics based on the current text style.
 # Measured values are returned in local coordinate space.
 
-proc nvgTextMetrics*(ctx: ptr NVGcontext; ascender: ptr cfloat; 
+proc nvgTextMetrics*(ctx: NVGcontextPtr; ascender: ptr cfloat; 
                      descender: ptr cfloat; lineh: ptr cfloat) {.nvg.}
 # Breaks the specified text into lines. If end is specified only the sub-string will be used.
 # White space is stripped at the beginning of the rows, the text is split at word boundaries or when new-line characters are encountered.
 # Words longer than the max width are slit at nearest character (i.e. no hyphenation).
 
-proc nvgTextBreakLines*(ctx: ptr NVGcontext; string: cstring; `end`: cstring; 
+proc nvgTextBreakLines*(ctx: NVGcontextPtr; string: cstring; `end`: cstring; 
                         breakRowWidth: cfloat; rows: ptr NVGtextRow; 
                         maxRows: cint): cint {.nvg.}
 #
@@ -646,12 +653,12 @@ type
 
 # Constructor and destructor, called by the render back-end.
 
-proc nvgCreateInternal*(params: ptr NVGparams): ptr NVGcontext {.nvg.}
-proc nvgDeleteInternal*(ctx: ptr NVGcontext) {.nvg.}
-proc nvgInternalParams*(ctx: ptr NVGcontext): ptr NVGparams {.nvg.}
+proc nvgCreateInternal*(params: ptr NVGparams): NVGcontextPtr {.nvg.}
+proc nvgDeleteInternal*(ctx: NVGcontextPtr) {.nvg.}
+proc nvgInternalParams*(ctx: NVGcontextPtr): ptr NVGparams {.nvg.}
 # Debug function to dump cached path data.
 
-proc nvgDebugDumpPathCache*(ctx: ptr NVGcontext) {.nvg.}
+proc nvgDebugDumpPathCache*(ctx: NVGcontextPtr) {.nvg.}
 # when defined(_MSC_VER): 
 # template NVG_NOTUSED*(v: expr): stmt = 
 #   while true: 
@@ -709,17 +716,17 @@ const
 # Flags should be combination of the create flags above.
 
 when defined(nvgGL2): 
-  proc nvgCreateGL2*(flags: cint): ptr NVGcontext {.glf2.}
-  proc nvgDeleteGL2*(ctx: ptr NVGcontext) {.glf2.}
+  proc nvgCreateGL2*(flags: cint): NVGcontextPtr {.glf2.}
+  proc nvgDeleteGL2*(ctx: NVGcontextPtr) {.glf2.}
 when defined(nvgGL3): 
-  proc nvgCreateGL3*(flags: cint): ptr NVGcontext {.glf2.}
-  proc nvgDeleteGL3*(ctx: ptr NVGcontext) {.glf2.}
+  proc nvgCreateGL3*(flags: cint): NVGcontextPtr {.glf2.}
+  proc nvgDeleteGL3*(ctx: NVGcontextPtr) {.glf2.}
 when defined(NANOVG_GLES2): 
-  proc nvgCreateGLES2*(flags: cint): ptr NVGcontext {.glf2.}
-  proc nvgDeleteGLES2*(ctx: ptr NVGcontext) {.glf2.}
+  proc nvgCreateGLES2*(flags: cint): NVGcontextPtr {.glf2.}
+  proc nvgDeleteGLES2*(ctx: NVGcontextPtr) {.glf2.}
 when defined(NANOVG_GLES3): 
-  proc nvgCreateGLES3*(flags: cint): ptr NVGcontext {.glf2.}
-  proc nvgDeleteGLES3*(ctx: ptr NVGcontext) {.glf2.}
+  proc nvgCreateGLES3*(flags: cint): NVGcontextPtr {.glf2.}
+  proc nvgDeleteGLES3*(ctx: NVGcontextPtr) {.glf2.}
 # These are additional flags on top of NVGimageFlags.
 
 type 
@@ -727,9 +734,9 @@ type
     NVG_IMAGE_NODELETE = 1 shl 16 # Do not delete GL texture handle.
 
 
-proc nvglCreateImageFromHandle*(ctx: ptr NVGcontext; textureId: GLuint; w: cint; 
+proc nvglCreateImageFromHandle*(ctx: NVGcontextPtr; textureId: GLuint; w: cint; 
                                 h: cint; flags: cint): cint {.glf2.}
-proc nvglImageHandle*(ctx: ptr NVGcontext; image: cint): GLuint {.glf2.}
+proc nvglImageHandle*(ctx: NVGcontextPtr; image: cint): GLuint {.glf2.}
 # #ifdef __cplusplus
 # }
 # #endif
@@ -1406,13 +1413,13 @@ when defined(NANOVG_GL_IMPLEMENTATION):
   #   free(gl);
   # }
   when defined(nvgGL2): 
-    proc nvgCreateGL2*(flags: cint): ptr NVGcontext
+    proc nvgCreateGL2*(flags: cint): NVGcontextPtr
   elif defined(nvgGL3): 
-    proc nvgCreateGL3*(flags: cint): ptr NVGcontext
+    proc nvgCreateGL3*(flags: cint): NVGcontextPtr
   elif defined(NANOVG_GLES2): 
-    proc nvgCreateGLES2*(flags: cint): ptr NVGcontext
+    proc nvgCreateGLES2*(flags: cint): NVGcontextPtr
   elif defined(NANOVG_GLES3): 
-    proc nvgCreateGLES3*(flags: cint): ptr NVGcontext
+    proc nvgCreateGLES3*(flags: cint): NVGcontextPtr
   # {
   #   NVGparams params;
   #   NVGcontext* ctx = NULL;
@@ -1445,20 +1452,20 @@ when defined(NANOVG_GL_IMPLEMENTATION):
   # }
 
   when defined(nvgGL2): 
-    proc nvgDeleteGL2*(ctx: ptr NVGcontext)
+    proc nvgDeleteGL2*(ctx: NVGcontextPtr)
   elif defined(nvgGL3): 
-    proc nvgDeleteGL3*(ctx: ptr NVGcontext)
+    proc nvgDeleteGL3*(ctx: NVGcontextPtr)
   elif defined(NANOVG_GLES2): 
-    proc nvgDeleteGLES2*(ctx: ptr NVGcontext)
+    proc nvgDeleteGLES2*(ctx: NVGcontextPtr)
   elif defined(NANOVG_GLES3): 
-    proc nvgDeleteGLES3*(ctx: ptr NVGcontext)
+    proc nvgDeleteGLES3*(ctx: NVGcontextPtr)
   # {
   #   nvgDeleteInternal(ctx);
   # }
-  proc nvglCreateImageFromHandle*(ctx: ptr NVGcontext; textureId: GLuint; 
+  proc nvglCreateImageFromHandle*(ctx: NVGcontextPtr; textureId: GLuint; 
                                   w: cint; h: cint; imageFlags: cint): cint {.glf2.}
 
-  proc nvglImageHandle*(ctx: ptr NVGcontext; image: cint): GLuint {.glf2.}
+  proc nvglImageHandle*(ctx: NVGcontextPtr; image: cint): GLuint {.glf2.}
 
 
 

@@ -1,10 +1,10 @@
 import 
-  nvg
+  nvg, os
 
 {.pragma: ic,
   importc, header:"demo.h", cdecl
 .}
-{.compile:"demo.c".}
+{.compile: nvg.ThisPath/"nanovg/example/demo.c".}
 
 type 
   DemoData* = object 
