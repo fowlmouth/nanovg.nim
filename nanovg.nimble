@@ -8,6 +8,8 @@ license       = "MIT"
 # Dependencies
 
 requires "nim >= 0.17.0"
+requires "opengl >= 1.1.0"
+requires "glfw >= 3.2.0"
 
 skipDirs = @["example"]
 
