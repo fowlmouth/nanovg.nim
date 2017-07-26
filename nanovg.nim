@@ -61,11 +61,18 @@ const ThisPath* = currentSourcePath.splitPath.head
 # #include <GL/gl.h>
 # #include <nanovg.h>
 # """.}
-{.passC: " -include\"GL/gl.h\" -include\"nanovg.h\" ".}
+when defined(macosx):
+  {.passC: "-include\"nanovg.h\" ".}
+  {.passC: "-I/usr/local/include".}
+  {.passL: "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo ".}
+else:
+  {.passC: " -include\"GL/gl.h\" -include\"nanovg.h\" ".}
+  {.passL: "-lGL".}
+
 {.passC: "-DNANOVG_"&GLVersion&"_IMPLEMENTATION".}
 {.passC: "-I"&ThisPath&"/nanovg/src -I"&ThisPath&"/nanovg/example ".}
-{.passL: "-lGL".}
 {.compile: ThisPath/"nanovg/src/nanovg.c"}
+
 
 
 const 

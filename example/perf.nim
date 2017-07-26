@@ -1,10 +1,10 @@
 import 
-  nvg, os
+  nanovg, os
 
 {.pragma: ic,
-  importc, header:"perf.h", cdecl
+  importc, header:"../../nanovg/example/perf.h", cdecl
 .}
-{.compile: nvg.ThisPath/"nanovg/example/perf.c".}
+{.compile: "../nanovg/example/perf.c".}
 
 type 
   GraphrenderStyle* = enum 
