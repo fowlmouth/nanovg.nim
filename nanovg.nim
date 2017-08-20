@@ -567,13 +567,13 @@ proc nvgAddFallbackFontId*(ctx: NVGContextPtr; baseFont: cint; fallbackFont: cin
 # Adds a fallback font by handle.
 
 proc nvgText*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; string: cstring; 
-              `end`: cstring): cfloat {.nvg.}
+              `end`: cstring = nil): cfloat {.nvg.}
 # Draws multi-line text string at specified location wrapped at the specified width. If end is specified only the sub-string up to the end is drawn.
 # White space is stripped at the beginning of the rows, the text is split at word boundaries or when new-line characters are encountered.
 # Words longer than the max width are slit at nearest character (i.e. no hyphenation).
 
 proc nvgTextBox*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
-                 breakRowWidth: cfloat; string: cstring; `end`: cstring) {.nvg.}
+                 breakRowWidth: cfloat; string: cstring; `end`: cstring = nil) {.nvg.}
 # Measures the specified text string. Parameter bounds should be a pointer to float[4],
 # if the bounding box of the text should be returned. The bounds value are [xmin,ymin, xmax,ymax]
 # Returns the horizontal advance of the measured text (i.e. where the next character should drawn).
