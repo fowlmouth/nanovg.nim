@@ -33,7 +33,7 @@ else:
 {.pragma: nvg,
   header:"nanovg.h",
   cdecl,
-  importc, 
+  importc,
 .}
 
 {.pragma: glf,
@@ -559,6 +559,12 @@ proc nvgFontFaceId*(ctx: NVGcontextPtr; font: cint) {.nvg.}
 
 proc nvgFontFace*(ctx: NVGcontextPtr; font: cstring) {.nvg.}
 # Draws text string at specified location. If end is specified only the sub-string up to the end is drawn.
+
+proc nvgAddFallbackFont*(ctx: NVGContextPtr; baseFont: cstring; fallbackFont: cstring) {.nvg.}
+# Adds a fallback font by name.
+
+proc nvgAddFallbackFontId*(ctx: NVGContextPtr; baseFont: cint; fallbackFont: cint) {.nvg.}
+# Adds a fallback font by handle.
 
 proc nvgText*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; string: cstring; 
               `end`: cstring): cfloat {.nvg.}
