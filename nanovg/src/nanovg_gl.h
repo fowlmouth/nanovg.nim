@@ -41,7 +41,6 @@ enum NVGcreateFlags {
 #  define NANOVG_GL3 1
 #  define NANOVG_GL_IMPLEMENTATION 1
 #  define NANOVG_GL_USE_UNIFORMBUFFER 1
-#include <OpenGL/gl3.h>
 #elif defined NANOVG_GLES2_IMPLEMENTATION
 #  define NANOVG_GLES2 1
 #  define NANOVG_GL_IMPLEMENTATION 1

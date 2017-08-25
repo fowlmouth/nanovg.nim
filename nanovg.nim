@@ -62,6 +62,7 @@ const ThisPath* = currentSourcePath.splitPath.head
 # #include <nanovg.h>
 # """.}
 when defined(macosx):
+  {.passC: "-include\"OpenGL/gl3.h\" ".}
   {.passC: "-include\"nanovg.h\" ".}
   {.passC: "-I/usr/local/include".}
   {.passL: "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo ".}
@@ -592,7 +593,7 @@ proc nvgTextBoxBounds*(ctx: NVGcontextPtr; x: cfloat; y: cfloat;
 # Measured values are returned in local coordinate space.
 
 proc nvgTextGlyphPositions*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
-                            string: cstring; `end`: cstring; 
+                            string: cstring; `end`: cstring = nil; 
                             positions: ptr NVGglyphPosition; maxPositions: cint): cint {.nvg.}
 # Returns the vertical metrics based on the current text style.
 # Measured values are returned in local coordinate space.
