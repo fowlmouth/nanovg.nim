@@ -17,8 +17,9 @@
 #
 
 import 
-  nvg, demo, perf, opengl
+  nanovg, demo, perf, opengl
 import glfw3 as glfw
+
 
 proc errorcb*(error: cint; desc: cstring) {.cdecl.}  = 
   #printf("GLFW error %d: %s\x0A", error, desc)
@@ -35,7 +36,7 @@ proc key*(window: glfw.Window; key: cint; scancode: cint; action: cint;
   # NVG_NOTUSED(scancode)
   # NVG_NOTUSED(mods)
   if key == KEY_ESCAPE and action == PRESS: 
-    SetWindowShouldClose(window, GL_TRUE)
+    SetWindowShouldClose(window, cint(GL_TRUE))
   if key == KEY_SPACE and action == PRESS: blowup = not blowup
   if key == KEY_S and action == PRESS: screenshot = 1
   if key == KEY_P and action == PRESS: premult = not premult
@@ -63,7 +64,7 @@ proc main*(): cint =
     # don't require this on win32, and works with more cards
     glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, 3)
     glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, 2)
-    glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
+    glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, cint(GL_TRUE))
     glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
   glfw.WindowHint(glfw.OPENGL_DEBUG_CONTEXT, 1)
   when defined(DEMO_MSAA): 
@@ -79,7 +80,7 @@ proc main*(): cint =
 
   glfw.MakeContextCurrent(window)
   when defined(NANOVG_GLEW): 
-    glewExperimental = GL_TRUE
+    glewExperimental = cint(GL_TRUE)
     if glewInit() != GLEW_OK: 
       printf("Could not init glew.\x0A")
       return - 1

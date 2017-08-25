@@ -33,7 +33,7 @@ else:
 {.pragma: nvg,
   header:"nanovg.h",
   cdecl,
-  importc, 
+  importc,
 .}
 
 {.pragma: glf,
@@ -61,11 +61,19 @@ const ThisPath* = currentSourcePath.splitPath.head
 # #include <GL/gl.h>
 # #include <nanovg.h>
 # """.}
-{.passC: " -include\"GL/gl.h\" -include\"nanovg.h\" ".}
+when defined(macosx):
+  {.passC: "-include\"OpenGL/gl3.h\" ".}
+  {.passC: "-include\"nanovg.h\" ".}
+  {.passC: "-I/usr/local/include".}
+  {.passL: "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo ".}
+else:
+  {.passC: " -include\"GL/gl.h\" -include\"nanovg.h\" ".}
+  {.passL: "-lGL".}
+
 {.passC: "-DNANOVG_"&GLVersion&"_IMPLEMENTATION".}
 {.passC: "-I"&ThisPath&"/nanovg/src -I"&ThisPath&"/nanovg/example ".}
-{.passL: "-lGL".}
 {.compile: ThisPath/"nanovg/src/nanovg.c"}
+
 
 
 const 
@@ -553,14 +561,20 @@ proc nvgFontFaceId*(ctx: NVGcontextPtr; font: cint) {.nvg.}
 proc nvgFontFace*(ctx: NVGcontextPtr; font: cstring) {.nvg.}
 # Draws text string at specified location. If end is specified only the sub-string up to the end is drawn.
 
+proc nvgAddFallbackFont*(ctx: NVGContextPtr; baseFont: cstring; fallbackFont: cstring) {.nvg.}
+# Adds a fallback font by name.
+
+proc nvgAddFallbackFontId*(ctx: NVGContextPtr; baseFont: cint; fallbackFont: cint) {.nvg.}
+# Adds a fallback font by handle.
+
 proc nvgText*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; string: cstring; 
-              `end`: cstring): cfloat {.nvg.}
+              `end`: cstring = nil): cfloat {.nvg.}
 # Draws multi-line text string at specified location wrapped at the specified width. If end is specified only the sub-string up to the end is drawn.
 # White space is stripped at the beginning of the rows, the text is split at word boundaries or when new-line characters are encountered.
 # Words longer than the max width are slit at nearest character (i.e. no hyphenation).
 
 proc nvgTextBox*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
-                 breakRowWidth: cfloat; string: cstring; `end`: cstring) {.nvg.}
+                 breakRowWidth: cfloat; string: cstring; `end`: cstring = nil) {.nvg.}
 # Measures the specified text string. Parameter bounds should be a pointer to float[4],
 # if the bounding box of the text should be returned. The bounds value are [xmin,ymin, xmax,ymax]
 # Returns the horizontal advance of the measured text (i.e. where the next character should drawn).
@@ -579,7 +593,7 @@ proc nvgTextBoxBounds*(ctx: NVGcontextPtr; x: cfloat; y: cfloat;
 # Measured values are returned in local coordinate space.
 
 proc nvgTextGlyphPositions*(ctx: NVGcontextPtr; x: cfloat; y: cfloat; 
-                            string: cstring; `end`: cstring; 
+                            string: cstring; `end`: cstring = nil; 
                             positions: ptr NVGglyphPosition; maxPositions: cint): cint {.nvg.}
 # Returns the vertical metrics based on the current text style.
 # Measured values are returned in local coordinate space.
